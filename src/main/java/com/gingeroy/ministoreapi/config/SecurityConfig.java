@@ -69,7 +69,9 @@ public class SecurityConfig {
             .csrf(c -> c.disable()) // 2.禁用跨站请求伪造（CSRF）
             .authorizeHttpRequests(c -> c
 //                            .anyRequest().permitAll() // 将所有端点公开
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/carts/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                     .requestMatchers(HttpMethod.POST,"/users").permitAll()
                     .requestMatchers(HttpMethod.POST,"/auth/login").permitAll()
                     .anyRequest().authenticated()
