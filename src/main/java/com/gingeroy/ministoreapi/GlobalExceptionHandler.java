@@ -1,6 +1,8 @@
 package com.gingeroy.ministoreapi;
 
 import com.gingeroy.ministoreapi.exceptions.CartNotFoundException;
+import com.gingeroy.ministoreapi.exceptions.CategoryNotFoundException;
+import com.gingeroy.ministoreapi.exceptions.ProductNotExistException;
 import com.gingeroy.ministoreapi.exceptions.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,20 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage());
         });
         return ResponseEntity.badRequest().body(errors);
+    }
+
+//    ProductNotExistException ex
+    @ExceptionHandler(ProductNotExistException.class)
+    public ResponseEntity<Map<String,String>> handleProductNotExist(){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Product not found."));
+    }
+
+//    CategoryNotFoundException ex
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<Map<String,String>> handleCategoryNotFound(){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Category not found."));
     }
 
 //    CartNotFoundException ex

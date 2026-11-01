@@ -1,15 +1,11 @@
 package com.gingeroy.ministoreapi.controllers;
 
 import com.gingeroy.ministoreapi.dtos.ProductDto;
-import com.gingeroy.ministoreapi.entities.Category;
-import com.gingeroy.ministoreapi.entities.Product;
-import com.gingeroy.ministoreapi.mappers.ProductMapper;
-import com.gingeroy.ministoreapi.repositories.CategoryRepository;
-import com.gingeroy.ministoreapi.repositories.ProductRepository;
+import com.gingeroy.ministoreapi.services.ProductService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -17,82 +13,42 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping("/products")
 public class ProductController {
-    private final ProductRepository productRepository;
-    private final ProductMapper productMapper;
-    private final CategoryRepository categoryRepository;
+    private final ProductService productService;
 
     @GetMapping
     public List<ProductDto> getAllProducts
             (@RequestParam(name = "categoryId", defaultValue = "", required = false) Byte categoryId) {
 
-        List<Product> products;
-        if(categoryId != null){
-            products = productRepository.findByCategoryId(categoryId);
-        }else{
-            products = productRepository.findAllWithCategory();
-        }
-        return products
-                .stream()
-                .map(product -> productMapper.toProductDto(product))
-                .toList();
+        return productService.getAllProducts(categoryId);
     }
 
-    @GetMapping("/{categoryId}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable Long categoryId) {
-        Product product = productRepository.findById(categoryId).orElseThrow();
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(productMapper.toProductDto(product));
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+
+        ProductDto productDto = productService.getProduct(id);
+        return ResponseEntity.ok(productDto);
     }
 
     @PostMapping
-    public ResponseEntity<ProductDto> createProduct(
-            @RequestBody ProductDto productDto,
-            UriComponentsBuilder uriBuilder){
-        Category category = categoryRepository.findById(productDto.getCategoryId()).orElse(null);
-        if (category == null){
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto){
 
-        Product product = productMapper.toEntity(productDto);
-        product.setCategory(category);
-        productRepository.save(product);
-        productDto.setId(product.getId());
-
-        var uri = uriBuilder.path("/products/{id}").buildAndExpand(product.getId()).toUri();
-        return ResponseEntity.created(uri).body(productDto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.createProduct(productDto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(
             @PathVariable(name = "id") Long id,
             @RequestBody ProductDto productDto){
-        Category category = categoryRepository.findById(productDto.getCategoryId()).orElse(null);
-        if (category == null){
-            return ResponseEntity.badRequest().build();
-        }
 
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null){
-            return ResponseEntity.notFound().build();
-        }
-
-        product.setCategory(category);
-        productMapper.update(productDto, product);
-        productRepository.save(product);
-        productDto.setId(product.getId());
-        return ResponseEntity.ok(productDto);
+        return ResponseEntity
+                .ok(productService.updateProduct(id, productDto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable(name = "id") Long id){
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null){
-            return ResponseEntity.notFound().build();
-        }
 
-        productRepository.delete(product);
+        productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 }
