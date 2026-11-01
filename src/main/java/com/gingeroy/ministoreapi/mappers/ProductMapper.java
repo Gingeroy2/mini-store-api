@@ -15,6 +15,7 @@ public interface ProductMapper {
 //    进入源对象的 category.id，映射到目标对象的 categoryId
     ProductDto toProductDto(Product product);
 
+    @Mapping(target = "id", ignore = true)
     Product toEntity(ProductDto productDto);
 
     @Mapping(target = "id",ignore = true)
