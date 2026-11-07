@@ -15,7 +15,7 @@ public interface UserMapper {
 
 //    将用户映射到用户DTO
 //    `ignore = true` - 映射的时候跳过这个字段，不赋值
-    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
+//    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
 //    代表：映射到 `UserDto` 的 `createdAt` 字段时，执行 Java 代码 `LocalDateTime.now()` 赋值，不从源对象 `User` 读取任何值
     UserDto toUserDto(User user);
 
