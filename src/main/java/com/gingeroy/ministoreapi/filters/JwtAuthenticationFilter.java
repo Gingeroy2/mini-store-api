@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 到这里意味着 token 是有效的
         // 告诉 Spring，这个用户已通过身份验证，并允许其访问受保护的资源
         var authentication = new UsernamePasswordAuthenticationToken(
-                jwtService.getEmailFromToken(token),
+                jwtService.getUserIdFromToken(token),
                 null,
                 null
         ); // 得到已认证的 token

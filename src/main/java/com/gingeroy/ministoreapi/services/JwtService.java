@@ -1,5 +1,6 @@
 package com.gingeroy.ministoreapi.services;
 
+import com.gingeroy.ministoreapi.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -14,10 +15,12 @@ public class JwtService {
     @Value("${spring.jwt.secret}")
     private String secret;
 
-    public String generateToken(String email) {
+    public String generateToken(User user) {
         final long tokenExpiration = 86400; // 24 hours in seconds
         return Jwts.builder() // 1. 拿一张空白门票
-                .subject(email) // 2. 在门票上写上：“这是 a@b.com 的票”
+                .subject(user.getId().toString()) // 2. 在门票上写上：“这是 userId 的票”
+                .claim("name", user.getName())
+                .claim("email", user.getEmail())
                 .issuedAt(new Date()) // 3. 盖上“生效时间”：现在生效
                 .expiration(new Date(System.currentTimeMillis() + tokenExpiration * 1000)) // 4. 盖上“失效时间”：24小时后作废
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes())) // 5. 盖上防伪印章（设置签名密钥）
@@ -49,7 +52,7 @@ public class JwtService {
         }
     }
 
-    public String getEmailFromToken(String token){
-        return getClaims(token).getSubject();
+    public Long getUserIdFromToken(String token){
+        return Long.valueOf(getClaims(token).getSubject());
     }
 }
