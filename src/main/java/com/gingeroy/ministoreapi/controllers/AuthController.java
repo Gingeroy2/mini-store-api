@@ -1,5 +1,6 @@
 package com.gingeroy.ministoreapi.controllers;
 
+import com.gingeroy.ministoreapi.config.JwtConfig;
 import com.gingeroy.ministoreapi.dtos.JwtResponse;
 import com.gingeroy.ministoreapi.dtos.LoginRequest;
 import com.gingeroy.ministoreapi.dtos.UserDto;
@@ -7,6 +8,8 @@ import com.gingeroy.ministoreapi.entities.User;
 import com.gingeroy.ministoreapi.mappers.UserMapper;
 import com.gingeroy.ministoreapi.repositories.UserRepository;
 import com.gingeroy.ministoreapi.services.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,15 +25,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
+//    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-//    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final JwtConfig jwtConfig;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
         /*User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -47,9 +52,17 @@ public class AuthController {
         );
 
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
-        return ResponseEntity.ok(new JwtResponse(token));
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true); // 防止客户端通过JavaScript访问cookie
+        cookie.setPath("/auth/refresh"); // 指定cookie的路径
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration()); // cookie有效期
+        cookie.setSecure(true); // 仅通过HTTPS传输cookie
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new JwtResponse(accessToken));
     }
 
     @PostMapping("/validate")
