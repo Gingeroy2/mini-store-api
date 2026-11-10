@@ -5,6 +5,7 @@ import com.gingeroy.ministoreapi.dtos.ChangePasswordRequest;
 import com.gingeroy.ministoreapi.dtos.RegisterUserRequest;
 import com.gingeroy.ministoreapi.dtos.UpdateUserRequest;
 import com.gingeroy.ministoreapi.dtos.UserDto;
+import com.gingeroy.ministoreapi.entities.Role;
 import com.gingeroy.ministoreapi.entities.User;
 import com.gingeroy.ministoreapi.mappers.UserMapper;
 import com.gingeroy.ministoreapi.repositories.UserRepository;
@@ -77,6 +78,7 @@ public class UserController {
 
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
 
         user = userRepository.save(user);
         UserDto userDto =  userMapper.toUserDto(user);

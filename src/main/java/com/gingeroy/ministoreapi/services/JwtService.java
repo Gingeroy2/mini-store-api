@@ -1,6 +1,7 @@
 package com.gingeroy.ministoreapi.services;
 
 import com.gingeroy.ministoreapi.config.JwtConfig;
+import com.gingeroy.ministoreapi.entities.Role;
 import com.gingeroy.ministoreapi.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -33,6 +34,7 @@ public class JwtService {
                 .subject(user.getId().toString()) // 2. 在门票上写上：“这是 userId 的票”
                 .claim("name", user.getName())
                 .claim("email", user.getEmail())
+                .claim("role", user.getRole())
                 .issuedAt(new Date()) // 3. 盖上“生效时间”：现在生效
                 .expiration(new Date(System.currentTimeMillis() + tokenExpiration * 1000)) // 4. 盖上“失效时间”
                 .signWith(jwtConfig.getSecretKey()) // 5. 盖上防伪印章（设置签名密钥）
@@ -66,5 +68,9 @@ public class JwtService {
 
     public Long getUserIdFromToken(String token){
         return Long.valueOf(getClaims(token).getSubject());
+    }
+
+    public Role getRoleFromToken(String token){
+        return Role.valueOf(getClaims(token).get("role", String.class));
     }
 }

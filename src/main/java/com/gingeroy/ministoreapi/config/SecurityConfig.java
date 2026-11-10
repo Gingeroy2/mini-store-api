@@ -1,5 +1,6 @@
 package com.gingeroy.ministoreapi.config;
 
+import com.gingeroy.ministoreapi.entities.Role;
 import com.gingeroy.ministoreapi.filters.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -73,6 +74,7 @@ public class SecurityConfig {
 //                            .anyRequest().permitAll() // 将所有端点公开
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/carts/**").permitAll()
+                    .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
                     .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                     .requestMatchers(HttpMethod.POST,"/users").permitAll()
                     .requestMatchers(HttpMethod.POST,"/auth/login").permitAll()
@@ -81,9 +83,14 @@ public class SecurityConfig {
             )
             .addFilterBefore(jwtAuthenticationFilter,
                     UsernamePasswordAuthenticationFilter.class)
-            .exceptionHandling(c ->
-                c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-            );
+            .exceptionHandling(c -> {
+                // 认证异常 - 401 未认证
+                c.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+                // 授权异常 - 403 未授权
+                c.accessDeniedHandler((request, response, accessDeniedException) ->
+                    response.setStatus(HttpStatus.FORBIDDEN.value()));
+            });
 
         return http.build();
     }
