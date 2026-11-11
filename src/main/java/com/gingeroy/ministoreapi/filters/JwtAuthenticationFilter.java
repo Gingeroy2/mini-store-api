@@ -35,20 +35,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.replace("Bearer ", "");
+        var jwt = jwtService.parseToken(token);
         // 验票
-        if (!jwtService.validateToken(token)) {
+        if (jwt == null || jwt.isExpired()) {
             filterChain.doFilter(request, response);
             return;
         }
 
         // 到这里意味着 token 是有效的
         // 告诉 Spring，这个用户已通过身份验证，并允许其访问受保护的资源
-        var userId = jwtService.getUserIdFromToken(token);
-        var role = jwtService.getRoleFromToken(token);
         var authentication = new UsernamePasswordAuthenticationToken(
-                userId, // 1. Principal（主体）：你是谁？
+                jwt.getUserId(), // 1. Principal（主体）：你是谁？
                 null, // 2. Credentials（凭证）：密码是多少？
-                List.of(new SimpleGrantedAuthority("ROLE_" + role)) // 3. Authorities（权限）：你能干嘛？
+                List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole())) // 3. Authorities（权限）：你能干嘛？
         ); // 通行证
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         // SecurityContextHolder 是 Spring Security 的“全局通行证登记处”

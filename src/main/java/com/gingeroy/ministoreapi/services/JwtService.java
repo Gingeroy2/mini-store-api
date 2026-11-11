@@ -18,19 +18,30 @@ public class JwtService {
     private String secret;*/
     private final JwtConfig jwtConfig;
 
-    public String generateAccessToken(User user) {
+    public Jwt generateAccessToken(User user) {
 //        final long tokenExpiration = 300; // 5 minutes in seconds
         return generateToken(user, jwtConfig.getAccessTokenExpiration());
     }
-    public String generateRefreshToken(User user) {
+    public Jwt generateRefreshToken(User user) {
         // 86400 - 24 hours in seconds
         // 604800 - 7 days in seconds
 //        final long tokenExpiration = 604800; // 7 days in seconds
         return generateToken(user, jwtConfig.getRefreshTokenExpiration());
     }
 
-    public String generateToken(User user, long tokenExpiration) {
-        return Jwts.builder() // 1. 拿一张空白门票
+    public Jwt generateToken(User user, long tokenExpiration) {
+        Claims claims = Jwts.claims()
+                .subject(user.getId().toString())
+                .add("name", user.getName())
+                .add("email", user.getEmail())
+                .add("role", user.getRole().name())
+                .issuedAt(new Date()) // 盖上“生效时间”：现在生效
+                .expiration(new Date(System.currentTimeMillis() + tokenExpiration * 1000)) // 盖上“失效时间”
+                .build();
+
+        return new Jwt(claims, jwtConfig.getSecretKey());
+
+        /*return Jwts.builder() // 1. 拿一张空白门票
                 .subject(user.getId().toString()) // 2. 在门票上写上：“这是 userId 的票”
                 .claim("name", user.getName())
                 .claim("email", user.getEmail())
@@ -38,8 +49,17 @@ public class JwtService {
                 .issuedAt(new Date()) // 3. 盖上“生效时间”：现在生效
                 .expiration(new Date(System.currentTimeMillis() + tokenExpiration * 1000)) // 4. 盖上“失效时间”
                 .signWith(jwtConfig.getSecretKey()) // 5. 盖上防伪印章（设置签名密钥）
-                .compact(); // 6. 塑封打包，变成一长串字符串返回
+                .compact(); // 6. 塑封打包，变成一长串字符串返回*/
+    }
 
+    // 参数：前端传过来的 token 字符串
+    public Jwt parseToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return new Jwt(claims, jwtConfig.getSecretKey());
+        } catch (JwtException e) {
+            return null;
+        }
     }
 
     private Claims getClaims(String token){
@@ -54,23 +74,5 @@ public class JwtService {
             issuedAt：签发时间
             expiration：过期时间
         所以，claims 就是装着这些信息的一个 Map 集合。*/
-    }
-
-    public boolean validateToken(String token){
-//        我要验牌！
-        try{
-            var claims = getClaims(token);
-            return claims.getExpiration().after(new Date()); // 过期时间，是不是在现在之后？
-        }catch(JwtException ex){
-            return false;
-        }
-    }
-
-    public Long getUserIdFromToken(String token){
-        return Long.valueOf(getClaims(token).getSubject());
-    }
-
-    public Role getRoleFromToken(String token){
-        return Role.valueOf(getClaims(token).get("role", String.class));
     }
 }

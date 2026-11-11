@@ -52,8 +52,8 @@ public class AuthController {
         );
 
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateAccessToken(user).toString();
+        String refreshToken = jwtService.generateRefreshToken(user).toString();
 
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true); // 防止客户端通过JavaScript访问cookie
@@ -69,13 +69,13 @@ public class AuthController {
     public ResponseEntity<JwtResponse> refresh(
             @CookieValue(value = "refreshToken") String refreshToken){
 
-        if (!jwtService.validateToken(refreshToken)){
+        var jwt = jwtService.parseToken(refreshToken);
+        if (jwt == null || jwt.isExpired()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Long userId = jwtService.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(userId).orElseThrow();
-        String accessToken = jwtService.generateAccessToken(user);
+        User user = userRepository.findById(jwt.getUserId()).orElseThrow();
+        String accessToken = jwtService.generateAccessToken(user).toString();
 
         return ResponseEntity.ok(new JwtResponse(accessToken));
     }
